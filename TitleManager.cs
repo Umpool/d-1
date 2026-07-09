@@ -227,6 +227,51 @@ public class TitleManager : MonoBehaviour
             settingsPopupPanel.SetActive(false); // 팝업창 OFF
         }
     }
+    // [유니티 매뉴얼] 이 코드 조각은 주석 포함 총 50줄입니다. 스크립트 맨 아래에 붙여넣으세요.
+
+    [Header("타이틀 글자 색상 변경 설정")]
+    [Tooltip("색상을 변경할 COLOR MIXER 타이틀 텍스트 오브젝트를 넣어주세요.")]
+    public TextMeshProUGUI titleMainText;
+
+    [Tooltip("글자가 다음 색상으로 변하는 데 걸리는 시간(초)입니다.")]
+    public float colorChangeSpeed = 2.0f;
+
+    // 기획하신 6가지 색상 명단 (적, 황, 녹, 청, 자, 흑)
+    private Color[] targetColors = new Color[]
+    {
+        Color.red,                                      // 적
+        new Color(1f, 0.92f, 0.016f),                   // 황 (유니티 기본 노란색)
+        Color.green,                                    // 녹
+        Color.blue,                                     // 청
+        new Color(0.5f, 0f, 0.5f),                      // 자 (보라색)
+        Color.white                                     // 백
+    };
+
+    private int currentColorIndex = 0;                  // 현재 색상 번호
+    private int nextColorIndex = 1;                     // 다음에 변할 색상 번호
+    private float colorTransitionProgress = 0f;         // 색상 변환 진행도 (0.0 ~ 1.0)
+
+    // 타이틀 화면이 켜져 있는 동안 매 프레임 실시간으로 실행되는 유니티 기본 함수입니다.
+    private void Update()
+    {
+        // 연결된 글자가 없다면 계산하지 않고 넘어갑니다.
+        if (titleMainText == null) return;
+
+        // 시간에 따라 진행도를 누적합니다.
+        colorTransitionProgress += Time.deltaTime / colorChangeSpeed;
+
+        // 현재 색상과 다음 색상을 비율(progress)에 맞춰 스르륵 섞어줍니다.
+        titleMainText.color = Color.Lerp(targetColors[currentColorIndex], targetColors[nextColorIndex], colorTransitionProgress);
+
+        // 다음 색상에 완전히 도달했다면(1.0 이상) 목표 색상을 다음 단계로 업데이트합니다.
+        if (colorTransitionProgress >= 1f)
+        {
+            colorTransitionProgress = 0f;               // 진행도 리셋
+            currentColorIndex = nextColorIndex;          // 현재 색상을 방금 도달한 색상으로 바꿈
+            nextColorIndex = (nextColorIndex + 1) % targetColors.Length; // 다음 색상 번호 결정 (마지막 흑색 다음엔 다시 0번 적색으로!)
+        }
+    }
+
 
 }
 
