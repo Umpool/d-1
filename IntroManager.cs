@@ -140,18 +140,22 @@ public class IntroLoadingManager : MonoBehaviour
     /// <summary>
     /// 로딩이 끝난 후 화면 전체(ClickPanel 등)를 눌렀을 때 실행할 함수입니다.
     /// </summary>
+    // [유니티 매뉴얼] IntroManager.cs의 맨 아래 클릭 함수 수정 조각입니다.
+    // [유니티 매뉴얼] IntroManager.cs의 맨 아래 클릭 함수 수정 조각입니다. (총 18줄)
     public void OnClickToTitle()
     {
         Debug.Log("[IntroManager] 화면 클릭 감지! 타이틀 화면을 활성화하고 인트로 화면 전체를 오프(OFF)합니다.");
 
-        // 1. 연결해둔 타이틀 화면 오브젝트가 있다면 켭니다.
+        // [핵심 수정] 씬 이동 대신, 연결해둔 타이틀 화면 오브젝트를 직접 켭니다.
         if (titleScreenObject != null)
         {
-            titleScreenObject.SetActive(true);
+            titleScreenObject.SetActive(true); // 타이틀 화면 ON!
         }
 
-        // 2. 이 스크립트가 붙어있는 인트로 오브젝트 자신을 통째로 끕니다.
-        gameObject.SetActive(false);
+        // 이 스크립트가 붙어있는 인트로 화면 오브젝트 자신을 통째로 끕니다.
+        gameObject.SetActive(false); // 인트로 화면 OFF!
     }
+
+
 
 }
