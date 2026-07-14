@@ -89,11 +89,26 @@ public class EventScreenManager : MonoBehaviour
                 Debug.Log("[Event] 텍스트 색상 초록색(Green) 변경 완료");
                 break;
 
-            case 6: // 7. 마지막 다음 버튼 ➡️ 메인 캐릭터 선택창으로 대전환!
-                Debug.Log("[Event] 시나리오 종료! 첫 이벤트 화면을 끄고 캐릭터 선택창을 켭니다.");
+            // [EventScreenManager.cs 파일의 case 6: 내부에 이 코드를 덮어쓰세요]
+            case 6: 
+                Debug.Log("[Event] 다음 화면으로 넘어가기 전 대사와 글자창을 완전히 포맷합니다.");
+                
+                // 1. 대사 단계를 0으로 밀어버립니다.
+                currentStep = 0; 
+                
+                // 2. [버그 완벽 박멸 - 잔상 소멸]: 다음번에 이 화면이 켜질 때 마지막 멘트 잔상이 
+                // 절대 찰나라도 보이지 않도록, 떠나기 직전에 글자창을 뽀얗고 깨끗하게 완전히 비워둡니다!
+                if (storyText != null) 
+                {
+                    storyText.text = ""; 
+                    storyText.color = Color.white; // 색상도 평소 흰색으로 복구
+                }
+
+                // 3. 화면 대전환 연동 규칙을 실행합니다.
                 if (characterSelectPanel != null) characterSelectPanel.SetActive(true);
                 if (firstEventPanel != null) firstEventPanel.SetActive(false);
                 break;
+
         }
     }
 
