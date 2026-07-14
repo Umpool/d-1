@@ -18,11 +18,29 @@ public class SecondEventScreenManager : MonoBehaviour
     // 현재 타이핑 연출이 진행 중인지 체크하는 안전장치
     private bool isTyping = false;
     private string fullText = "";
+    private float lastClickTime = 0f;
+
+    private void Start()
+    {
+        currentStep = 0;
+        isTyping = false;
+        fullText = "";
+
+        if (storyText != null)
+        {
+            storyText.text = "";
+            storyText.color = Color.white;
+        }
+
+        StartEventWithDelay();
+    }
+
+
 
     public void StartEventWithDelay()
     {
         // 0.5초 동안 유니티 엔진과 유저가 숨을 완전히 고른 뒤에 첫 시나리오를 가동하라고 명합니다.
-        Invoke("ExecuteCurrentStep", 0.5f);
+        Invoke("ExecuteCurrentStep", 0.2f);
     }
 
 
@@ -31,8 +49,13 @@ public class SecondEventScreenManager : MonoBehaviour
     /// </summary>
     public void OnClickNextButton()
     {
-        // [안전장치] 만약 글자가 타닥타닥 찍히는 중이라면, 버튼을 눌러도 다음 단계로 안 넘어가고 
-        // 문장을 한 번에 짜잔! 하고 전부 보여주는 스킵(Skip) 처리를 합니다.
+        // [강력한 연타 방어막] 이전 클릭 후 0.4초가 지나지 않았다면 클릭을 무시합니다.
+        if (Time.time - lastClickTime < 0.3f)
+        {
+            return;
+        }
+        lastClickTime = Time.time;
+
         if (isTyping)
         {
             StopAllCoroutines();
@@ -42,10 +65,10 @@ public class SecondEventScreenManager : MonoBehaviour
             return;
         }
 
-        // 타이핑이 완전히 끝난 상태에서 버튼을 누르면 다음 단계로 숫자를 올립니다.
         currentStep++;
         ExecuteCurrentStep();
     }
+
 
 
 
