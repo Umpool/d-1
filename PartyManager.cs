@@ -1,60 +1,34 @@
-// [유니티 매뉴얼] 이 코드는 주석 포함 총 50줄입니다.
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PartyManager : MonoBehaviour
 {
+    // [어디서나 접근할 수 있는 싱글톤 통제실 인스턴스]
     public static PartyManager Instance { get; private set; }
-
-    [Header("파티 데이터")]
-    [Tooltip("현재 파티에 참가 중인 캐릭터들의 ID 리스트")]
+    
+    // 유저가 선택하여 최종적으로 마을로 들고 갈 파티 데이터 주머니 (깃허브 연동)
     public List<string> currentPartyList = new List<string>();
-
-    [Tooltip("파티에 최대로 넣을 수 있는 인원수")]
-    public int maxPartySize = 3;
 
     private void Awake()
     {
-        // 어디서나 소환할 수 있는 중앙 통제실(싱글톤) 방식을 채택합니다.
+        // 싱글톤 규칙 적용: 씬 전환 시에도 데이터를 안전하게 보존합니다.
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // 화면이 바뀌어도 절대 파괴되지 않음
+            DontDestroyOnLoad(gameObject);
         }
         else { Destroy(gameObject); }
     }
 
-    /// <summary>
-    /// [핵심 기능]: 파티에 캐릭터 추가 (자유롭게 넣기)
-    /// </summary>
-    public bool AddToParty(string characterID)
+    // 캐릭터 선택창에서 1명을 영입하거나 교체할 때 데이터 주머니를 갱신해 주는 함수입니다.
+    public void SetMainCharacter(string characterID)
     {
-        if (currentPartyList.Contains(characterID))
-        {
-            Debug.LogWarning($"[Party] {characterID}는 이미 파티에 참가 중입니다.");
-            return false;
-        }
-
-        if (currentPartyList.Count >= maxPartySize)
-        {
-            Debug.LogWarning("[Party] 파티원이 가득 찼습니다!");
-            return false;
-        }
-
+        // 메인 캐릭터는 언제나 1명뿐이므로, 기존에 저장된 데이터가 있다면 깨끗이 비워줍니다.
+        currentPartyList.Clear();
+        
+        // 새로 선택된 캐릭터의 ID를 파티 리스트에 최종 등록합니다.
         currentPartyList.Add(characterID);
-        Debug.Log($"[Party] 파티원 영입 성공! 현재 인원: {currentPartyList.Count}/{maxPartySize}");
-        return true;
-    }
-
-    /// <summary>
-    /// [핵심 기능]: 파티에서 캐릭터 제외 (자유롭게 빼기)
-    /// </summary>
-    public void RemoveFromParty(string characterID)
-    {
-        if (currentPartyList.Contains(characterID))
-        {
-            currentPartyList.Remove(characterID);
-            Debug.Log($"[Party] {characterID} 탈퇴 완료. 현재 인원: {currentPartyList.Count}/{maxPartySize}");
-        }
+        
+        Debug.Log($"[Party] 메인 캐릭터 등록 완료: {characterID}");
     }
 }
