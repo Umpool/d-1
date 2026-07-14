@@ -26,7 +26,7 @@ public class EventScreenManager : MonoBehaviour
     public void StartEventWithDelay()
     {
         // 0.5초 동안 유니티 엔진과 유저가 숨을 완전히 고른 뒤에 첫 시나리오를 가동하라고 명합니다.
-        Invoke("ExecuteCurrentStep", 0.5f);
+        Invoke("ExecuteCurrentStep", 0.2f);
     }
 
 
