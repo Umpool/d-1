@@ -2,127 +2,178 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// 전체 시나리오 관리 클래스
 public class SecondEventScreenManager : MonoBehaviour
 {
     [Header("[UI 컴포넌트 및 버튼 연결]")]
-    public TextMeshProUGUI storyText;   // 대사 출력 텍스트창
-    public Button nextButton;           // 다음 대사 버튼
+    [SerializeField] private TextMeshProUGUI storyText; // 대사 출력 TMPro
+    [SerializeField] private Button nextButton;        // 클릭 버튼
 
-    [Header("[최종 마을 화면 패널]")]
-    public GameObject villagePanel;     // 최종 이동할 마을 오브젝트
+    [Header("[최종 화면 전환]")]
+    [SerializeField] private GameObject villagePanel;  // 마을 패널
 
     [Header("[타이핑 연출 설정]")]
-    public float typingSpeed = 0.05f;   // 글자 찍히는 속도
+    [SerializeField] private float typingSpeed = 0.05f; // 글자 출력 속도
 
-    private int currentStep = 0;        // 현재 시나리오 단계
-    private bool isTyping = false;      // 현재 글자가 찍히는 중인가 체크
-    private string fullText = "";       // 원본 전체 대사 임시 저장고
-    private Coroutine colorCoroutine;   // 서서히 색을 물들여줄 타이머 주머니
-    
-    // [기획 핵심 변수]: 현재 글자가 지정된 색으로 물든 상태인지 체크하는 스위치
-    private bool isColorFaded = false;  
+    // 상태 제어용 프라이빗 변수들
+    private int currentStep = 0;      // 현재 대사 인덱스
+    private bool isTyping = false;     // 타이핑 중 여부 (스킵 체크용)
+    private string fullText = "";      // 현재 화면에 출력할 전체 원본 대사
+    private Coroutine colorCoroutine;  // 텍스트 색상 변경 코루틴 제어용
+}
+private void OnEnable()
+{
+    currentStep = 0; // 단계 초기화
 
-    private void OnEnable()
+    // 버튼 클릭 이벤트 연결
+    if (nextButton != null)
     {
-        currentStep = 0; // 화면이 켜지자마자 0단계 대사부터 가동합니다.
-        isColorFaded = false;
-        
-        if (nextButton != null) nextButton.onClick.AddListener(OnClickNextButton);
-        ExecuteCurrentStep();
+        nextButton.onClick.RemoveAllListeners();
+        nextButton.onClick.AddListener(OnClickNextButton);
     }
+    ExecuteCurrentStep(); // 첫 문장 출력
+}
 
-    private void OnDisable()
-    {
-        if (nextButton != null) nextButton.onClick.RemoveListener(OnClickNextButton);
-    }
+private void OnDisable()
+{
+    if (nextButton != null) nextButton.onClick.RemoveListener(OnClickNextButton);
+}
 
-    public void OnClickNextButton()
-    {
-        // [규칙 1]: 글자가 타닥타닥 찍히는 중이면 문장을 한 번에 다 보여주고 멈춥니다 (스킵 기능)
-        if (isTyping)
-        {
-            StopAllCoroutines();
-            storyText.text = fullText;
-            isTyping = false;
-            return;
-        }
-
-        // [규칙 2]: 타이핑이 끝났는데 아직 색이 안 물들었다면? -> 스르륵 색을 바꿉니다!
-        if (!isColorFaded)
-        {
-            StartFadeColorEffect();
-            return;
-        }
-
-        // [규칙 3]: 색 물들기까지 완전히 끝난 상태에서 누르면 다음 대사 단계로 이동합니다.
-        currentStep++;
-        isColorFaded = false; // 새로운 단계를 위해 색상 스위치 꺼주기
-        ExecuteCurrentStep();
-    }
-    // ... 파트 2로 바로 이어집니다.
-    // ... 파트 1 코드 하단에 바로 이어서 붙여넣으세요
-    private void ExecuteCurrentStep()
-    {
-        if (storyText != null) storyText.color = Color.white; // 텍스트 컬러 초기화
-        switch (currentStep)
-        {
-            case 0: fullText = "네번째 텍스트입니다."; break;
-            case 1: fullText = "다섯번째 텍스트입니다."; break;
-            case 2: fullText = "여섯번째 텍스트입니다."; break;
-            default:
-                // 최종 시나리오 종료 후 자가 초기화 및 화면 전환
-                currentStep = 0; 
-                if (storyText != null) storyText.text = ""; 
-                if (villagePanel != null) villagePanel.SetActive(true);
-                this.gameObject.SetActive(false); 
-                return;
-        }
-        StartTypingEffect(fullText);
-    }
-
-    private void StartFadeColorEffect()
-    {
-        Color targetColor = Color.white;
-        switch (currentStep)
-        {
-            case 0: targetColor = Color.blue; break;
-            case 1: targetColor = new Color(0.5f, 0f, 0.5f); break;
-            case 2: targetColor = Color.red; break;
-        }
-        if (colorCoroutine != null) StopCoroutine(colorCoroutine);
-        colorCoroutine = StartCoroutine(FadeTextColorRoutine(targetColor, 0.8f));
-    }
-
-    private System.Collections.IEnumerator FadeTextColorRoutine(Color endColor, float duration)
-    {
-        float elapsedTime = 0f;
-        Color startColor = storyText.color;
-        while (elapsedTime < duration)
-        {
-            elapsedTime += Time.deltaTime;
-            storyText.color = Color.Lerp(startColor, endColor, elapsedTime / duration);
-            yield return null;
-        }
-        storyText.color = endColor;
-        isColorFaded = true; // 색상 변경 완료 표시
-    }
-
-    private void StartTypingEffect(string targetText)
+/// <summary>
+/// 클릭 시 타이핑 중이면 전체 출력(스킵), 완료 상태면 다음 대사로 진행
+/// </summary>
+public void OnClickNextButton()
+{
+    if (isTyping) // 타이핑 중일 때 -> 스킵
     {
         StopAllCoroutines();
-        fullText = targetText;
-        StartCoroutine(TypeTextRoutine());
+        storyText.text = fullText;
+        isTyping = false;
+        return;
+    }
+    // 타이핑 완료 상태일 때 -> 다음 단계
+    currentStep++;
+    ExecuteCurrentStep();
+}
+/// <summary>
+/// 기획한 시나리오 조건에 맞춰 대사와 색상을 준비하는 함수입니다.
+/// </summary>
+private void ExecuteCurrentStep()
+{
+    // 연출이 시작되기 전, 텍스트 색상을 기본 흰색으로 맑게 초기화합니다.
+    if (storyText != null)
+    {
+        storyText.color = Color.white;
     }
 
-    private System.Collections.IEnumerator TypeTextRoutine()
+    Color targetColor = Color.white;
+
+    switch (currentStep)
     {
-        isTyping = true;
-        storyText.text = "";
-        foreach (char letter in fullText)
+        case 0:
+            fullText = "네번째 텍스트입니다.";
+            targetColor = Color.blue; // 파란색으로 물들 예정
+            break;
+
+        case 1:
+            fullText = "다섯번째 텍스트입니다.";
+            targetColor = new Color(0.5f, 0f, 0.5f); // 보라색으로 물들 예정
+            break;
+        case 2:
+            fullText = "여섯번째 텍스트입니다.";
+            targetColor = Color.red; // 빨간색으로 물들 예정
+            break;
+
+        default:
+            // 모든 대사가 끝나면 숫자를 0으로 돌려놓습니다.
+            currentStep = 0;
+
+            // 다음번에 찰나라도 잔상이 보이지 않게 텍스트를 깨끗하게 비웁니다.
+            if (storyText != null)
+            {
+                storyText.text = "";
+            }
+
+            // 최종 마을 화면 패널은 켜고, 현재 이벤트창은 비활성화합니다.
+            if (villagePanel != null)
+            {
+                villagePanel.SetActive(true);
+            }
+            this.gameObject.SetActive(false);
+            return;
+    }
+
+    // 대사와 색상 지정이 끝나면 타이핑과 색상 변경 연출을 시작합니다.
+    StartEffects(targetColor);
+}
+/// <summary>
+/// 기존 연출들을 모두 안전하게 중지시키고 새로운 연출을 시작합니다.
+/// </summary>
+private void StartEffects(Color targetColor)
+{
+    StopAllCoroutines(); // 진행 중이던 모든 타이밍 기능을 리셋합니다.
+
+    // 1. 한 글자씩 출력되는 타이핑 효과 가동
+    StartCoroutine(TypeTextRoutine());
+
+    // 2. 색상이 스르륵 물드는 페이드 효과 가동 (지속시간 0.8초)
+    colorCoroutine = StartCoroutine(FadeTextColorRoutine(targetColor, 0.8f));
+}
+
+/// <summary>
+/// 글자 주머니에서 한 글자씩 꺼내어 조립 후 화면에 출력하는 기능입니다.
+/// </summary>
+private System.Collections.IEnumerator TypeTextRoutine()
+{
+    isTyping = true; // "지금 글자 찍는 중이야" 라고 컴퓨터에게 알립니다.
+
+    if (storyText != null)
+    {
+        storyText.text = ""; // 글자창을 먼저 뽀얗게 비웁니다.
+    }
+
+    // 전체 문장을 한 글자씩 순서대로 화면에 더해나갑니다.
+    foreach (char letter in fullText)
+    {
+        if (storyText != null)
         {
             storyText.text += letter;
-            yield return new WaitForSeconds(typingSpeed);
         }
-        isTyping = false;
+        yield return new WaitForSeconds(typingSpeed); // 설정한 시간만큼 대기합니다.
     }
+
+    isTyping = false; // "글자 다 찍었어" 라고 상태를 변경합니다.
+}
+/// <summary>
+/// 글자 색상을 부드럽게 목표 색상(endColor)으로 변하게 만드는 기능입니다.
+/// </summary>
+private System.Collections.IEnumerator FadeTextColorRoutine(Color endColor, float duration)
+{
+    float elapsedTime = 0f;
+    Color startColor = Color.white; // 항상 깨끗한 흰색에서 시작합니다.
+
+    if (storyText != null)
+    {
+        startColor = storyText.color;
+    }
+
+    // 설정한 지속 시간(duration) 동안 매 프레임마다 색상을 스르륵 변경합니다.
+    while (elapsedTime < duration)
+    {
+        elapsedTime += Time.deltaTime;
+
+        if (storyText != null)
+        {
+            // 두 색상 사이를 부드럽게 이어주는 Lerp 기능입니다.
+            storyText.color = Color.Lerp(startColor, endColor, elapsedTime / duration);
+        }
+        yield return null; // 다음 프레임까지 대기합니다.
+    }
+
+    // 마지막 오차를 방지하기 위해 목표 색상을 정확하게 최종 대입합니다.
+    if (storyText != null)
+    {
+        storyText.color = endColor;
+    }
+}
 }
