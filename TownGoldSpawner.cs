@@ -15,6 +15,10 @@ public class TownGoldSpawner : MonoBehaviour
 
     private List<GameObject> activeGolds = new List<GameObject>();
 
+    [Header("감시할 이벤트 화면")]
+    [SerializeField] private GameObject secondEventPanel;
+
+
     // 코인 프리팹의 가로/세로 크기를 미리 저장할 변수
     private float coinHalfWidth = 0f;
     private float coinHalfHeight = 0f;
@@ -51,6 +55,11 @@ public class TownGoldSpawner : MonoBehaviour
                 SpawnGold();
             }
             yield return new WaitForSeconds(spawnInterval);
+            if (secondEventPanel != null && secondEventPanel.activeSelf)
+            {
+                yield return new WaitForSeconds(1f);
+                continue;
+            }
         }
     }
 
