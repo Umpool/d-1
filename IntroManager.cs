@@ -9,6 +9,11 @@ public class IntroLoadingManager : MonoBehaviour
     public TextMeshProUGUI statusText;
     public GameObject clickPanel;
 
+    [Header("인트로 터치 제어 설정 (직접 연결 방식)")]
+    [Tooltip("인스펙터 체크박스를 제어할 인트로 클릭 감지 버튼 컴포넌트를 직접 넣어주세요.")]
+    public Button introClickButton;
+
+
     [Header("로딩 속도 설정")]
     public float loadingSpeed = 0.5f;
 
@@ -27,11 +32,10 @@ public class IntroLoadingManager : MonoBehaviour
         // [강제 활성화 기능 추가] 게임이 시작되면 이 스크립트가 붙은 오브젝트를 무조건 활성화합니다!
         gameObject.SetActive(true);
         loadingSlider.value = 0f;
-        // [선배의 팁] 연결해 둔 'clickPanel'(인트로 클릭 감지)의 Button 컴포넌트를 찾아 인스펙터 체크박스를 해제(false)합니다!
-        if (clickPanel != null && clickPanel.TryGetComponent<Button>(out Button introBtn))
-        {
-            introBtn.interactable = false;
-        }
+
+        // [당신의 설계] 연결된 버튼의 Interactable 네모 박스 체크를 시작하자마자 완전히 해제(OFF)합니다!
+        if (introClickButton != null) introClickButton.interactable = false;
+
         // [새로운 기능] 게임이 켜질 때 0, 1, 2 중 하나의 숫자를 무작위로 뽑습니다.
         textGroupIndex = Random.Range(0, 3);
         Debug.Log($"[IntroLoading] 이번 판에 선택된 로딩 문구 세트 번호: {textGroupIndex}번");
@@ -118,16 +122,20 @@ public class IntroLoadingManager : MonoBehaviour
         isLoadingComplete = true;
         statusText.text = "화면을 클릭해주세요.";
 
-        // ---------------- [기존 코드를 안전하게 보호하며 합치기] ----------------
-        // 로딩이 100% 끝났으니, 잠가두었던 클릭 패널을 안전하게 화면에 켜줍니다(true)!
-        if (clickPanel != null)
+        // [최종 마감] '로딩 완료!' 로그가 찍히기 직전에, 꺼두었던 버튼 컴포넌트의 체크박스를 다시 켭니다(ON)!
+        if (clickPanel != null && clickPanel.TryGetComponent<Button>(out Button introBtn))
         {
-            clickPanel.SetActive(true);
+            introBtn.interactable = true;
         }
-        // ----------------------------------------------------------------------
 
         Debug.Log("[IntroLoading] 로딩 완료!");
+        // 2. [당신의 설계] 메시지가 나오자마자 독립된 방에 연결된 버튼의 체크박스를 다시 탁! 체크(ON)합니다.
+        if (introClickButton != null)
+        {
+            introClickButton.interactable = true;
+        }
     }
+
 
 
     private void CheckUserData()
