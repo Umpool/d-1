@@ -29,17 +29,18 @@ public class CharacterStorageManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // 1. 싱글톤 보유 가방(UserCharacterInventory)으로부터 내가 가진 전체 캐릭터 ID를 내 창고 주머니로 완벽하게 이식합니다.
+        // 1. 싱글톤 보유 가방으로부터 내가 가진 전체 캐릭터 ID를 내 창고 주머니로 이식합니다.
         if (UserCharacterInventory.Instance != null && UserCharacterInventory.Instance.ownedCharacterIDs != null)
         {
-            storageOwnedCharacterIDs.Clear();
+            // 💡 [수정] 선언된 변수 이름인 storageTempPartyList로 맞춰줍니다.
+            storageTempPartyList.Clear();
             foreach (string id in UserCharacterInventory.Instance.ownedCharacterIDs)
             {
-                storageOwnedCharacterIDs.Add(id);
+                storageTempPartyList.Add(id);
             }
         }
-
-        // 2. 외부 파티 주머니(PartyManager)에 저장된 진짜 리더 캐릭터 ID 데이터를 내 임시 주머니로 복사합니다.
+        
+        // 2. 외부 파티 주머니에 저장된 진짜 리더 캐릭터 ID 데이터를 내 임시 주머니로 복사합니다.
         if (PartyManager.Instance != null && PartyManager.Instance.currentPartyList != null)
         {
             storageTempPartyList.Clear();
@@ -55,38 +56,49 @@ public class CharacterStorageManager : MonoBehaviour
     }
 
 
+
     /// <summary>
     /// [최종 혁신 엔진] 프로젝트 '캐릭터' 폴더에 들어있는 진짜 실물 데이터 시트(.asset)를 직접 찾아와 프리팹에 통째로 수동 도킹시킵니다!
     /// </summary>
     public void RefreshUniqueStorageUI()
     {
-        // 1. 기존 창고 격자판 자식 오브젝트(오래된 카드들) 청소
+        // 1. 기존 창고 격자판 자식 오브젝트 청소
         foreach (Transform child in storageGridParentGroup)
         {
             Destroy(child.gameObject);
         }
 
-        // 2. 선택창에서 유저가 콕 집어 고른 나만의 고유 캐릭터 ID를 영리하게 꺼내옵니다.
+        // 2. 선택창에서 유저가 콕 집어 고른 메인 캐릭터 ID 로드
         string currentMainHeroID = PlayerPrefs.GetString("SelectedCharacterID", "01");
 
-        // 💡 [기획 원안 연동] 유저가 보유한 고유 캐릭터 리스트를 생성합니다.
-        List<string> testOwnedIDs = new List<string> { currentMainHeroID };
+        // 💡 파티창(storageTempPartyList)에 들어있지 않은 '보유 캐릭터'들만 창고 리스트에 담아 아래로 내립니다.
+        List<string> warehouseIDs = new List<string>();
+        
+        // [규칙 확인] 만약 싱글톤 가방에 데이터가 있다면 복사, 없다면 테스트로 메인 영웅 적용
+        if (UserCharacterInventory.Instance != null && UserCharacterInventory.Instance.ownedCharacterIDs.Count > 0)
+        {
+            foreach (string id in UserCharacterInventory.Instance.ownedCharacterIDs)
+            {
+                if (!storageTempPartyList.Contains(id)) warehouseIDs.Add(id);
+            }
+        }
+        else
+        {
+            // 파티(맨 왼쪽 슬롯)에 등록되지 않은 상태일 때만 창고에 보여줍니다.
+            if (!storageTempPartyList.Contains(currentMainHeroID)) warehouseIDs.Add(currentMainHeroID);
+        }
 
-        // 3. [우측 하단] 캐릭터 현재 보유수 / 최대보유수 텍스트 업데이트 (예: 1 / 10)
+        // 3. 우측 하단 보유 수량 텍스트 업데이트
         if (storageCountText != null)
         {
-            storageCountText.text = testOwnedIDs.Count.ToString() + " / " + storageMaxCount.ToString();
+            storageCountText.text = (storageTempPartyList.Count + warehouseIDs.Count).ToString() + " / " + storageMaxCount.ToString();
         }
 
-        // 4. 프로젝트 '캐릭터' 폴더 안의 모든 기획서 데이터를 싹 긁어옵니다.
-        CharacterData[] allDataSheets = Resources.LoadAll<CharacterData>("캐릭터");
-        if (allDataSheets == null || allDataSheets.Length == 0)
-        {
-            allDataSheets = Resources.FindObjectsOfTypeAll<CharacterData>();
-        }
+        // 4. Resources 폴더 최상단 데이터 시트 로드
+CharacterData[] allDataSheets = Resources.LoadAll<CharacterData>("캐릭터");
 
-        // 5. 내 가방을 뒤져서 파일 이름에 현재 유저가 고른 ID가 들어있는 진짜 문서를 찾아 격자판에 생성합니다!
-        foreach (string charID in testOwnedIDs)
+        // 5. 창고에 남은 캐릭터들을 좌측 상단부터 규칙대로 나열
+        foreach (string charID in warehouseIDs)
         {
             CharacterData originalData = null;
             foreach (var sheet in allDataSheets)
@@ -98,28 +110,28 @@ public class CharacterStorageManager : MonoBehaviour
                 }
             }
 
-            // 진짜 데이터 문서를 찾았다면 만능 '슬롯' 프리팹을 격자판 자식으로 소환합니다.
             if (originalData != null && storageCharacterSlotPrefab != null)
             {
                 GameObject newCard = Instantiate(storageCharacterSlotPrefab, storageGridParentGroup);
                 
-                // 생성된 슬롯에 데이터를 심어줍니다.
                 CharacterComponent cardComp = newCard.GetComponent<CharacterComponent>();
-                if (cardComp != null)
-                {
-                    cardComp.SetCharacterData(originalData);
-                }
+                if (cardComp != null) cardComp.myData = originalData;
 
-                // 슬롯 겉면 이미지와 기획서에 명시된 고유 색상을 입혀줍니다.
-                Image cardImage = newCard.GetComponent<Image>();
-                if (cardImage != null && originalData.characterSprite != null)
+                // 이미지 및 고유 색상 입히기
+                Image[] allImages = newCard.GetComponentsInChildren<Image>(true);
+                foreach (Image img in allImages)
                 {
-                    cardImage.sprite = originalData.characterSprite;
-                    cardImage.color = new Color(originalData.characterColor.r, originalData.characterColor.g, originalData.characterColor.b, 1f);
+                    if (img != null)
+                    {
+                        if (originalData.characterSprite != null) img.sprite = originalData.characterSprite;
+                        img.color = new Color(originalData.characterColor.r, originalData.characterColor.g, originalData.characterColor.b, 1f);
+                    }
                 }
             }
         }
     }
+
+
 
 
 
