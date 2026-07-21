@@ -90,23 +90,24 @@ public class CharacterSelectManager : MonoBehaviour
         if (PartyManager.Instance != null && PartyManager.Instance.currentPartyList.Count > 0)
         {
             Debug.Log("[System] 파티창에 캐릭터 확인 완료! 모험을 출발합니다.");
-            
             if (warningText != null) warningText.text = "";
+
+            // 💡 [수정 및 추가]: 씬이 바뀌어도 유실되지 않도록 하드디스크에 고른 메인 캐릭터 ID를 확실하게 세이브합니다!
+            string selectedID = PartyManager.Instance.currentPartyList[0]; // 첫 번째 배치된 메인 캐릭터 ID 추출
+            PlayerPrefs.SetString("SelectedCharacterID", selectedID);
+            PlayerPrefs.Save();
+            Debug.Log($"[System] 씬 이동 전 메인 캐릭터 ID 세이브 완료: {selectedID}");
 
             if (secondEventPanel != null)
             {
                 secondEventPanel.SetActive(true);
-
-                // [원격 시동 장치 장착] 화면을 켜자마자 2차 이벤트의 0.5초 대기 타이머를 강제로 가동합니다!
                 SecondEventScreenManager eventManager = secondEventPanel.GetComponent<SecondEventScreenManager>();
                 if (eventManager != null)
                 {
                     eventManager.StartEventWithDelay();
                 }
-
                 this.gameObject.SetActive(false);
             }
-
         }
         else
         {
