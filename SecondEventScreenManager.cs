@@ -66,22 +66,33 @@ public class SecondEventScreenManager : MonoBehaviour
 
         switch (currentStep)
         {
-            case 0: // 1. 첫 번째 텍스트(타이핑) [6-44]
-                StartTypingEffect("네 번째 텍스트입니다.");
+            case 0:
+                if (storyText != null) storyText.color = Color.white;
+                StartTypingEffect("네번째 텍스트입니다.");
                 break;
-            case 1: // 2. 버튼 -> 색상 변화 [6-44]
+
+            case 1:
+                Debug.Log("[Event] 텍스트 색상 파란색(Blue) 스르륵 페이드 시작");
                 StartColorFadeEffect(Color.blue);
                 break;
-            case 2: // 3. 두 번째 텍스트(타이핑) [6-44]
-                StartTypingEffect("다섯 번째 텍스트입니다.");
+
+            case 2:
+                if (storyText != null) storyText.color = Color.white;
+                StartTypingEffect("다섯번째 텍스트입니다.");
                 break;
-            case 3: // 4. 버튼 -> 색상 변화 [6-44]
-                StartColorFadeEffect(Color.green);
+
+            case 3:
+                Debug.Log("[Event] 텍스트 색상 보라색(Purple) 스르륵 페이드 시작");
+                StartColorFadeEffect(new Color(0.5f, 0f, 0.5f));
                 break;
-            case 4: // 5. 세 번째 텍스트(타이핑) [6-44]
-                StartTypingEffect("여섯 번째 텍스트입니다.");
+
+            case 4:
+                if (storyText != null) storyText.color = Color.white;
+                StartTypingEffect("여섯번째 텍스트입니다.");
                 break;
-            case 5: // 6. 버튼 -> 색상 변화 [6-44]
+
+            case 5:
+                Debug.Log("[Event] 텍스트 색상 빨간색(Red) 스르륵 페이드 시작");
                 StartColorFadeEffect(Color.red);
                 break;
 
